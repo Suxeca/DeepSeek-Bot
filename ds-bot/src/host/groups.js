@@ -124,10 +124,14 @@ export function install(rt) {
       await rt.ensureCapabilities(known)
       return { id: known, brief: undefined }
     }
-    const id = await rt.createSession(`${member.name} · ${room.name}`, { dir: rt.workDirOf({ botId: member.id, roomId: room.id }) })
+    const preset = room.preset || member.preset
+    const id = await rt.createSession(`${member.name} · ${room.name}`, {
+      dir: rt.workDirOf({ botId: member.id, roomId: room.id }),
+      preset,
+    })
     room.sessions[member.id] = id
     rt.groupOwners.set(id, { botId: member.id, roomId: room.id })
-    delete room.seen[member.id]
+    if (room.seen) delete room.seen[member.id]
     const ref = await rt.desiredModel(member)
     if (ref !== undefined) {
       await rt.selectSessionModel(id, splitRef(ref))
@@ -589,6 +593,7 @@ export function install(rt) {
     await ctx.sessions.flush(agent.session)
   }
   rt.postToRoom = postToRoom
+  rt.groupSessionFor = groupSessionFor
 
   // A member the round moved on from (it went on working, went quiet or waited for an
   // approval) posts what its turn ended with. The member that asked for it and anyone

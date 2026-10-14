@@ -24,7 +24,8 @@ export function install(rt) {
   // Under the PTC preset (DSH Desktop's default) a model may call only run_code, which
   // turns down the group_relay call that a group chat's Session is given. A Session
   // keeps the preset it is made with.
-  async function botPreset() {
+  async function botPreset(preset) {
+    if (typeof preset === 'string' && preset.trim() !== '') return { agentPreset: preset.trim() }
     const presets = ctx.get?.('agentPresets')
     if (presets === undefined) return {}
     const standard = (await presets.list()).some(preset => preset.id === 'standard' && preset.broken === undefined)
@@ -33,7 +34,7 @@ export function install(rt) {
 
   // `dir` is a working folder outside the team workspace. Such a Session is made by cwd
   // alone, so it joins no DSH workspace and the user's own project lists stay as they are.
-  async function createSession(title, { dir } = {}) {
+  async function createSession(title, { dir, preset } = {}) {
     // A Bot's tools run here too; while another dsh holds the team, a new Session would
     // belong to no saved Bot.
     const readOnly = rt.readOnly()
@@ -41,7 +42,7 @@ export function install(rt) {
     const usable = dir !== undefined && await rt.isFolder(dir)
     if (dir !== undefined && !usable) rt.warn('ds-bot: the working folder %s is gone; %s starts in the team workspace', dir, title)
     const place = usable ? { cwd: dir } : { workspaceId: await ensureWorkspace() }
-    const { sessionId } = await ctx.sessionController.create({ ...place, ...await botPreset() })
+    const { sessionId } = await ctx.sessionController.create({ ...place, ...await botPreset(preset) })
     const agent = await rt.resolveAgent(sessionId)
     await ctx.sessionTitle.rename(agent.session, title)
     return sessionId
@@ -69,7 +70,7 @@ export function install(rt) {
 
   // `pickModel` leaves the model to the user: the chat opens on a model card, and the
   // greeting waits until a model is chosen. So does a Bot made when no model is served.
-  async function createBot({ name: botName, role = '', instructions = '', color, brief = '', createdBy, main = false, avatar, model, effort, workDir, copyOf, pickModel = false }) {
+  async function createBot({ name: botName, role = '', instructions = '', color, brief = '', createdBy, main = false, avatar, model, effort, workDir, preset, copyOf, pickModel = false }) {
     const cleanName = String(botName ?? '').trim().slice(0, 40)
     const problem = nameProblem(cleanName)
     if (problem !== undefined) throw new Error(problem)
@@ -79,7 +80,7 @@ export function install(rt) {
     const modelRef = model ? await rt.resolveModel(model) : pickModel ? undefined : await rt.defaultModel()
     const effortId = modelRef !== undefined && effort !== undefined ? await rt.resolveEffort(modelRef, effort) : undefined
     const dir = workDir === undefined || workDir === null ? undefined : await rt.cleanWorkDir(workDir)
-    const id = await createSession(cleanName, { dir })
+    const id = await createSession(cleanName, { dir, preset })
     try {
       state.bots[id] = {
         id,
@@ -91,6 +92,7 @@ export function install(rt) {
         ...(modelRef ? { model: modelRef } : {}),
         ...(effortId ? { effort: effortId } : {}),
         ...(dir ? { workDir: dir } : {}),
+        ...(preset ? { preset } : {}),
         instructions: String(instructions).trim(),
         createdAt: Date.now(),
         createdBy: createdBy ?? null,
@@ -280,7 +282,7 @@ export function install(rt) {
     if (members.length > ROOM_MAX_MEMBERS) throw new Error(`A group chat holds at most ${ROOM_MAX_MEMBERS} Bots`)
   }
 
-  async function createRoom({ members: memberIds = [], name: roomName, notice, mode, admin, createdBy } = {}) {
+  async function createRoom({ members: memberIds = [], name: roomName, notice, mode, admin, preset, createdBy } = {}) {
     const members = [...new Set(memberIds)].filter(id => rt.botOf(id))
     checkMembers(members)
     const custom = cleanRoomName(roomName ?? '')
@@ -292,12 +294,13 @@ export function install(rt) {
     const title = custom || autoRoomName(members)
     // The group's own Session only relays, so it stays in the team workspace; the
     // group's folder is for its members' Sessions.
-    const id = await createSession(title)
+    const id = await createSession(title, { preset })
     try {
       state.rooms[id] = {
         id,
         name: title,
         ...(custom ? { named: true } : {}),
+        ...(preset ? { preset } : {}),
         members,
         admin: adminId,
         mode: mode ?? 'admin',

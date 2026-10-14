@@ -107,3 +107,27 @@ test('a group made under the PTC preset relays through run_code', async (t) => {
     timeoutMs: 600_000,
   })
 })
+
+test('a Session is created with an explicit preset when specified', async (t) => {
+  const { rt, created, stop } = start({ presets: [{ id: 'cordis' }, { id: 'standard' }] })
+  t.after(stop)
+  await rt.load()
+  await rt.createSession('Special', { preset: 'cordis' })
+  assert.deepEqual(created, [{ workspaceId: 'w1', agentPreset: 'cordis' }])
+})
+
+test('a group room session and its member session inherit the group preset', async (t) => {
+  const { rt, created, stop } = start({ presets: [{ id: 'cordis' }, { id: 'standard' }] })
+  t.after(stop)
+  await rt.load()
+  const worker = await rt.createBot({ name: 'Worker', role: 'Dev', instructions: '' })
+  const room = await rt.createRoom({ members: ['chief', worker.id], name: 'Meta', preset: 'cordis' })
+  assert.equal(room.preset, 'cordis')
+  // created[0] was worker session
+  // created[1] is room session
+  assert.deepEqual(created[1], { workspaceId: 'w1', agentPreset: 'cordis' })
+  await rt.groupSessionFor(room, rt.botOf('chief'))
+  // created[2] is chief's group session
+  assert.deepEqual(created[2], { workspaceId: 'w1', agentPreset: 'cordis' })
+})
+

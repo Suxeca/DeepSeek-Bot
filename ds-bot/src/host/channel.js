@@ -141,7 +141,7 @@ export function install(rt) {
           return ok([...rt.roomProgress.entries()].filter(([, entry]) => entry.roomId === body.roomId).map(([callId, entry]) => ({ callId, replies: entry.replies, speaking: entry.speaking ?? null })))
         case 'create-bot': {
           await rt.bootstrap()
-          const bot = await rt.createBot({ name: body.name, role: body.role, color: body.color, instructions: body.instructions, brief: body.brief, avatar: body.avatar, model: body.model, effort: body.effort, workDir: body.workDir })
+          const bot = await rt.createBot({ name: body.name, role: body.role, color: body.color, instructions: body.instructions, brief: body.brief, avatar: body.avatar, model: body.model, effort: body.effort, workDir: body.workDir, preset: body.preset })
           return ok(bot)
         }
         case 'update-bot':
@@ -160,7 +160,12 @@ export function install(rt) {
           return ok(view())
         case 'create-room': {
           await rt.load()
-          const room = await rt.createRoom({ members: Array.isArray(body.members) ? body.members : [], name: body.name, ...(typeof body.admin === 'string' ? { admin: body.admin } : {}) })
+          const room = await rt.createRoom({
+            members: Array.isArray(body.members) ? body.members : [],
+            name: body.name,
+            ...(typeof body.admin === 'string' ? { admin: body.admin } : {}),
+            ...(typeof body.preset === 'string' ? { preset: body.preset } : {}),
+          })
           if (body.greet === true) await rt.greetRoom(room.id).catch(error => rt.warn('ds-bot: greeting in %s failed: %s', room.name, error))
           return ok(room)
         }

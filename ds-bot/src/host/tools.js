@@ -194,6 +194,7 @@ export function install(rt) {
       instructions: { type: 'string', required: true, description: 'What this Bot is responsible for and how it should work' },
       brief: { type: 'string', description: 'Why the user wants it, passed to the new Bot as its first context' },
       model: { type: 'string', description: 'Model the Bot runs on, as provider/model or a model id. Only when the user names one; otherwise the model you run on.' },
+      preset: { type: 'string', description: 'Agent preset (e.g. cordis for creator mode, standard, z3-theory-research)' },
       work_dir: WORK_DIR_PARAM,
     },
     output,
@@ -209,8 +210,8 @@ export function install(rt) {
         const creator = callerBot(exec)
         const served = creator?.model && (await rt.catalog()).some(entry => entry.ref === creator.model)
         const model = args.model || (served ? creator.model : undefined)
-        const bot = await rt.createBot({ ...args, model, workDir, createdBy: creator?.id })
-        return `Created ${bot.name}${workDir ? `, working in ${workDir}` : ''}. It is greeting the user now.`
+        const bot = await rt.createBot({ ...args, model, workDir, preset: args.preset, createdBy: creator?.id })
+        return `Created ${bot.name}${workDir ? `, working in ${workDir}` : ''}${args.preset ? ` under preset ${args.preset}` : ''}. It is greeting the user now.`
       } catch (error) {
         return `Could not create the Bot: ${error.message}`
       }
@@ -298,6 +299,7 @@ export function install(rt) {
       notice: { type: 'string', description: 'Shared instructions every member reads before speaking in this group' },
       admin: { type: 'string', description: 'Member who leads the group; defaults to you' },
       mode: MODE_PARAM,
+      preset: { type: 'string', description: 'Agent preset id for the group room and all its member sessions (e.g. cordis for creator mode, standard, z3-theory-research)' },
     },
     output,
     async execute(args, exec) {
@@ -310,7 +312,7 @@ export function install(rt) {
       if (admin === undefined) return `No Bot named ${args.admin}. Team: ${teamNames()}`
       const members = [...new Set([self, ...bots.map(bot => bot.id), admin.id])]
       try {
-        const room = await rt.createRoom({ members, name: args.name, notice: args.notice, mode: args.mode, admin: admin.id, createdBy: self })
+        const room = await rt.createRoom({ members, name: args.name, notice: args.notice, mode: args.mode, admin: admin.id, preset: args.preset, createdBy: self })
         return `Created group "${room.name}" with ${room.members.map(id => rt.botOf(id).name).join(', ')}. ${admin.id === self ? 'You are' : `${admin.name} is`} its admin. It is in the user's sidebar; use post_to_group to start a discussion there.`
       } catch (error) {
         return `Could not create the group: ${error.message}`

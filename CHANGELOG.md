@@ -4,6 +4,11 @@ All notable changes to DS Bot are listed here. The format follows [Keep a Change
 
 ## [Unreleased]
 
+### Added
+
+- Support explicit `preset` on `create_bot` and `create_group` tools and API endpoints, allowing a Bot or a group chat to be created under a specific agent preset (e.g. `cordis` for creator mode).
+- Group chat member sessions now inherit the group room's `preset`, ensuring all member sessions created within that group adhere to the declared preset rather than falling back to the global default preset.
+
 ### Changed
 
 - A Bot at work in a group chat no longer stays silent until it is done: it says what it will do, keeps the group posted as it goes, and ends with the result.
