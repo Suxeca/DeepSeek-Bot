@@ -181,6 +181,24 @@ export function install(rt) {
   // A member's group Session, created on its first turn there. A new one starts with
   // a fresh look at the log and a brief of the member's own chat; the brief is the
   // first message, so it stays fixed and the prefix stays cacheable.
+  async function roomPresetOf(room) {
+    if (!room) return undefined
+    try {
+      const agent = await rt.resolveAgent(room.id)
+      const presets = rt.ctx.get?.('agentPresets')
+      const composed = presets?.composedPreset?.(agent.ctx)
+      if (typeof composed === 'string' && composed.trim()) {
+        return composed.trim()
+      }
+    } catch {
+      // Ignore resolution errors and fall back to static room.preset
+    }
+    if (typeof room.preset === 'string' && room.preset.trim()) {
+      return room.preset.trim()
+    }
+    return undefined
+  }
+
   async function groupSessionFor(room, member) {
     room.sessions ??= {}
     const known = room.sessions[member.id]
@@ -188,7 +206,13 @@ export function install(rt) {
       await rt.ensureCapabilities(known)
       return { id: known, brief: undefined }
     }
-    const id = await rt.createSession(`${member.name} · ${room.name}`, { dir: rt.workDirOf({ botId: member.id, roomId: room.id }) })
+    const roomPreset = await roomPresetOf(room)
+    const memberPreset = typeof member.preset === 'string' && member.preset.trim() ? member.preset.trim() : undefined
+    const preset = roomPreset || memberPreset
+    const id = await rt.createSession(`${member.name} · ${room.name}`, {
+      dir: rt.workDirOf({ botId: member.id, roomId: room.id }),
+      preset,
+    })
     // While the Session was made the member may have left or been deleted, the group been
     // deleted, or another turn made the member's Session first: the new one is not kept.
     // Undefined means the member is gone from the group.
@@ -200,7 +224,7 @@ export function install(rt) {
     }
     room.sessions[member.id] = id
     rt.groupOwners.set(id, { botId: member.id, roomId: room.id })
-    delete room.seen[member.id]
+    if (room.seen) delete room.seen[member.id]
     const ref = await rt.desiredModel(member)
     if (ref !== undefined) {
       await rt.selectSessionModel(id, splitRef(ref))
@@ -693,6 +717,7 @@ export function install(rt) {
     await ctx.sessions.flush(agent.session)
   }
   rt.postToRoom = postToRoom
+  rt.groupSessionFor = groupSessionFor
 
   // A member the round moved on from (it went on working, went quiet or waited for an
   // approval) posts what its turn ended with. The member that asked for it and anyone

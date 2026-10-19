@@ -12,7 +12,7 @@ export const GROUP_REF = { type: 'string', required: true, description: 'Exact g
 const BLOCKING_QUESTION_TOOL = 'ask_user_question'
 // DS Bot carries no goal across conversation parts, so Bot Sessions do not run DSH goals.
 const GOAL_TOOLS = ['create_goal', 'update_goal', 'get_goal']
-const HIDDEN_TOOLS = [BLOCKING_QUESTION_TOOL, ...GOAL_TOOLS]
+const HIDDEN_TOOLS = [BLOCKING_QUESTION_TOOL]
 const GOAL_REFUSAL = 'DS Bot does not run goals. Ask the Bot in a message instead.'
 const MODE_PARAM = {
   type: 'string',
@@ -248,6 +248,7 @@ export function install(rt) {
       instructions: { type: 'string', required: true, description: 'What this Bot is responsible for and how it should work' },
       brief: { type: 'string', description: 'Why the user wants it, passed to the new Bot as its first context' },
       model: { type: 'string', description: 'Model the Bot runs on, as provider/model or a model id. Only when the user names one; otherwise the model you run on.' },
+      preset: { type: 'string', description: 'Agent preset (e.g. cordis for creator mode, standard, z3-theory-research)' },
       work_dir: WORK_DIR_PARAM,
     },
     output,
@@ -263,8 +264,8 @@ export function install(rt) {
         const creator = callerBot(exec)
         const served = creator?.model && (await rt.catalog()).some(entry => entry.ref === creator.model)
         const model = args.model || (served ? creator.model : undefined)
-        const bot = await rt.createBot({ ...args, model, workDir, createdBy: creator?.id })
-        return `Created ${bot.name}${workDir ? `, working in ${workDir}` : ''}. It is greeting the user now.`
+        const bot = await rt.createBot({ ...args, model, workDir, preset: args.preset, createdBy: creator?.id })
+        return `Created ${bot.name}${workDir ? `, working in ${workDir}` : ''}${args.preset ? ` under preset ${args.preset}` : ''}. It is greeting the user now.`
       } catch (error) {
         return `Could not create the Bot: ${error.message}`
       }
@@ -281,6 +282,7 @@ export function install(rt) {
       instructions: { type: 'string', description: 'Replacement instructions' },
       color: { type: 'string', description: `One of ${[...COLORS, ...EXTRA_COLORS].join(', ')}` },
       model: { type: 'string', description: 'Move the Bot to another model, as provider/model or a model id' },
+      preset: { type: 'string', description: 'Agent preset id for this Bot; an empty string clears it' },
       work_dir: { ...WORK_DIR_PARAM, description: `${WORK_DIR_PARAM.description}; an empty string returns it to the team workspace` },
     },
     output,
@@ -293,11 +295,11 @@ export function install(rt) {
       if (bot === undefined) return `No Bot named ${args.bot}.`
       if (bot.id !== caller.id && !rt.isMain(self)) return 'Only a Main Bot can change another Bot. Leave out bot to change yourself, or ask a Main Bot with message_bot.'
       try {
-        const { name: newName, role, instructions, color, model } = args
+        const { name: newName, role, instructions, color, model, preset } = args
         const moving = typeof args.work_dir === 'string'
         const workDir = moving ? await rt.cleanWorkDir(args.work_dir) : undefined
         if (moving && workDir !== bot.workDir) await rt.approveFolder(exec, { path: workDir, sessions: rt.sessionsOfBot(bot.id), who: { en: bot.name, zh: ` ${bot.name} ` } })
-        const next = await rt.updateBot(bot.id, { name: newName, role, instructions, color, ...(model ? { model } : {}), ...(moving ? { workDir: workDir ?? '' } : {}) })
+        const next = await rt.updateBot(bot.id, { name: newName, role, instructions, color, ...(model ? { model } : {}), ...(preset !== undefined ? { preset } : {}), ...(moving ? { workDir: workDir ?? '' } : {}) })
         if (!moving) return `Updated ${next.name}.`
         const folder = workDir ?? 'the team workspace'
         return bot.id === caller.id ? `Updated ${next.name}. From your next step on, you work in ${folder}.` : `Updated ${next.name}. It now works in ${folder}.`
@@ -317,6 +319,27 @@ export function install(rt) {
       if (models.length === 0) return 'No models are configured. Ask the user to add one in Settings → Models.'
       const fallback = rt.defaultRef()
       return models.map(entry => `- ${entry.ref}${entry.name !== entry.id ? ` (${entry.name})` : ''}${entry.input?.includes('image') ? ', reads images' : ''}${entry.ref === fallback ? ', default' : ''}`).join('\n')
+    },
+  }))
+
+  ctx.tools.register(defineTool({
+    name: 'handoff_part',
+    description: 'Main Bot only. Manually trigger a conversation handoff to a fresh part (Part N+1) for a Bot, generating a structured handoff note and clearing the active context window.',
+    parameters: {
+      bot: { type: 'string', description: 'Name of the Bot to hand off; leave out to hand off yourself (Chief)' },
+    },
+    output,
+    async execute(args, exec) {
+      await rt.load()
+      const self = rt.selfOf(exec.agent?.id)
+      if (!rt.isMain(self)) return 'Only a Main Bot can trigger handoff.'
+      const target = args.bot ? rt.findBot(args.bot) : rt.botOf(self)
+      if (!target) return `No Bot named ${args.bot}.`
+      const sessionId = rt.chatOf(target.id)
+      const agent = await rt.resolveAgent(sessionId)
+      if (!agent) return `Agent ${sessionId} not found.`
+      rt.startSwitch(agent, { hard: true })
+      return `Handoff initiated for ${target.name}. It will move to Part ${((target.segments ?? []).length + 2)} as soon as the current turn completes.`
     },
   }))
 
@@ -352,6 +375,7 @@ export function install(rt) {
       notice: { type: 'string', description: 'Shared instructions every member reads before speaking in this group' },
       admin: { type: 'string', description: 'Member who leads the group; defaults to you' },
       mode: MODE_PARAM,
+      preset: { type: 'string', description: 'Agent preset id for the group room and all its member sessions (e.g. cordis for creator mode, standard, z3-theory-research)' },
     },
     output,
     async execute(args, exec) {
@@ -364,7 +388,7 @@ export function install(rt) {
       if (admin === undefined) return `No Bot named ${args.admin}. Team: ${teamNames()}`
       const members = [...new Set([self, ...bots.map(bot => bot.id), admin.id])]
       try {
-        const room = await rt.createRoom({ members, name: args.name, notice: args.notice, mode: args.mode, admin: admin.id, createdBy: self })
+        const room = await rt.createRoom({ members, name: args.name, notice: args.notice, mode: args.mode, admin: admin.id, preset: args.preset, createdBy: self })
         return `Created group "${room.name}" with ${room.members.map(id => rt.botOf(id).name).join(', ')}. ${admin.id === self ? 'You are' : `${admin.name} is`} its admin. It is in the user's sidebar; use post_to_group to start a discussion there.`
       } catch (error) {
         return `Could not create the group: ${error.message}`
@@ -383,6 +407,7 @@ export function install(rt) {
       remove_members: { type: 'array', items: { type: 'string' }, description: 'Exact names of Bots to remove' },
       admin: { type: 'string', description: 'Member to make the admin; "none" leaves the group without one (Main Bots only)' },
       mode: MODE_PARAM,
+      preset: { type: 'string', description: 'Agent preset id for the group room and all its member sessions (e.g. cordis for creator mode, standard, z3-theory-research)' },
       work_dir: { ...WORK_DIR_PARAM, description: `${WORK_DIR_PARAM.description}. Every member works there in this group; an empty string lets each member work in its own folder again (Main Bots only)` },
     },
     output,
@@ -424,6 +449,7 @@ export function install(rt) {
           admin,
           add: add.bots.map(bot => bot.id),
           remove: remove.bots.map(bot => bot.id),
+          ...(args.preset !== undefined ? { preset: args.preset } : {}),
           ...(moving ? { workDir: workDir ?? '' } : {}),
         }, self)
         return changes.length === 0 ? `Nothing changed in "${next.name}".` : `Updated "${next.name}": ${changes.join('; ')}.`

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { FishLogo } from '@deepseek-ai/dsh-client-ui-primitives'
 import { isMainOf } from './sources.js'
 import { currentPart, previewOf, relativeShort } from './text.js'
-import { PlusIcon, SearchIcon, SidebarIcon, GaugeIcon, PlugIcon, ClockIcon, GearIcon, PinMarkIcon, ConnectorIcon, SwitchIcon, CloudDownloadIcon } from './icons.js'
+import { PlusIcon, SearchIcon, SidebarIcon, GaugeIcon, PlugIcon, ClockIcon, GearIcon, PinMarkIcon, ConnectorIcon, SwitchIcon, CloudDownloadIcon, CloseIcon } from './icons.js'
 import { MAIN_LOOK } from './characters.js'
 import { botState, BotMark, BotAvatar, RoomAvatar } from './mark.js'
 import { reducedMotion } from './activity-row.js'
@@ -277,6 +277,7 @@ export function TeamSidebar(props) {
   }
   return h('div', { className: wide ? 'bt-side' : 'bt-side bt-rail', onKeyDown: typeToSearch },
     wide ? h('div', { className: 'bt-side-top' },
+      h('button', { type: 'button', className: 'bt-round bt-mobile-close', 'aria-label': t('Close'), title: t('Close'), onClick: () => actions.collapseSidebar?.() }, h(CloseIcon)),
       h('span', { className: 'bt-brand' }, h(BrandMark, { size: 22 }), h(BrandName)),
       h(UpdateButton, { useUpdate: props.useUpdate, actions }),
       h('button', { type: 'button', className: 'bt-round', 'aria-label': t('Search'), title: t('Search'), onClick: () => actions.openPalette() }, h(SearchIcon)),

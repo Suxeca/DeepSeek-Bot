@@ -516,6 +516,8 @@ button.bt-set-row:hover{background:var(--bt-hover)}
    collapsed: on the rail, or fixed in a Windows title bar, where it also stays while
    the sidebar is open. Elsewhere an open sidebar uses the team's own top row. */
 html:not([data-windows-titlebar]) :not([class*="_collapsed"])>[class*="_logoRow"]{display:none!important}
+.bt-mobile-close{display:none!important}
+@media (max-width:1024px){.bt-mobile-close{display:inline-flex!important;margin-right:auto!important}}
 html[data-windows-titlebar] :not([class*="_collapsed"])>[class*="_logoRow"]{height:0!important;margin:0!important}
 html[data-windows-titlebar] .bt-side-collapse,html[data-platform=darwin] .bt-side-collapse{display:none}
 /* The footer ends in the Bot row: the whale's settings seat, then Connect plugins. Every

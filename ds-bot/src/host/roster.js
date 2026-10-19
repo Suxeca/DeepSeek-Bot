@@ -34,16 +34,29 @@ export function install(rt) {
   // Under the PTC preset (DSH Desktop's default) a model may call only run_code, which
   // turns down the group_relay call that a group chat's Session is given. A Session
   // keeps the preset it is made with.
-  async function botPreset() {
+  async function botPreset(preset) {
+    const clean = typeof preset === 'string' ? preset.trim() : ''
     const presets = ctx.get?.('agentPresets')
-    if (presets === undefined) return {}
-    const standard = (await presets.list()).some(preset => preset.id === 'standard' && preset.broken === undefined)
+    if (presets === undefined) {
+      return clean ? { agentPreset: clean } : {}
+    }
+    const list = await presets.list().catch(() => [])
+    if (clean) {
+      const found = list.find(p => (p.id === clean || p.name === clean) && p.broken === undefined)
+      if (found) return { agentPreset: found.id }
+      if (list.length > 0) {
+        const available = list.filter(p => p.broken === undefined).map(p => p.id).join(', ')
+        throw new Error(`Preset "${clean}" is not available. Available presets: ${available || 'none'}`)
+      }
+      return { agentPreset: clean }
+    }
+    const standard = list.some(preset => preset.id === 'standard' && preset.broken === undefined)
     return standard ? { agentPreset: 'standard' } : {}
   }
 
   // `dir` is a working folder outside the team workspace. Such a Session is made by cwd
   // alone, so it joins no DSH workspace and the user's own project lists stay as they are.
-  async function createSession(title, { dir } = {}) {
+  async function createSession(title, { dir, preset } = {}) {
     // A Bot's tools run here too; while another dsh holds the team, a new Session would
     // belong to no saved Bot.
     const readOnly = rt.readOnly()
@@ -51,7 +64,7 @@ export function install(rt) {
     const usable = dir !== undefined && await rt.isFolder(dir)
     if (dir !== undefined && !usable) rt.warn('ds-bot: the working folder %s is gone; %s starts in the team workspace', dir, title)
     const place = usable ? { cwd: dir } : { workspaceId: await ensureWorkspace() }
-    const { sessionId } = await ctx.sessionController.create({ ...place, ...await botPreset() })
+    const { sessionId } = await ctx.sessionController.create({ ...place, ...await botPreset(preset) })
     const agent = await rt.resolveAgent(sessionId)
     await ctx.sessionTitle.rename(agent.session, title)
     return sessionId
@@ -104,13 +117,15 @@ export function install(rt) {
     return holdName('bot', cleanName, () => buildBot(cleanName, options))
   }
 
-  async function buildBot(cleanName, { role = '', instructions = '', color, brief = '', createdBy, main = false, avatar, model, effort, workDir, copyOf, pickModel = false }) {
+  async function buildBot(cleanName, { role = '', instructions = '', color, brief = '', createdBy, main = false, avatar, model, effort, workDir, preset, copyOf, pickModel = false }) {
     const cleanAvatarValue = cleanAvatar(avatar)
     // The model is fixed at creation, so a later change of the DSH default leaves it alone.
     const modelRef = model ? await rt.resolveModel(model) : pickModel ? undefined : await rt.defaultModel()
     const effortId = modelRef !== undefined && effort !== undefined ? await rt.resolveEffort(modelRef, effort) : undefined
     const dir = workDir === undefined || workDir === null ? undefined : await rt.cleanWorkDir(workDir)
-    const id = await createSession(cleanName, { dir })
+    const sourceBot = copyOf ? state.bots[copyOf] : undefined
+    const cleanPreset = typeof preset === 'string' && preset.trim() ? preset.trim() : (sourceBot?.preset ? sourceBot.preset : undefined)
+    const id = await createSession(cleanName, { dir, preset: cleanPreset })
     try {
       state.bots[id] = {
         id,
@@ -122,6 +137,7 @@ export function install(rt) {
         ...(modelRef ? { model: modelRef } : {}),
         ...(effortId ? { effort: effortId } : {}),
         ...(dir ? { workDir: dir } : {}),
+        ...(cleanPreset ? { preset: cleanPreset } : {}),
         instructions: String(instructions).trim(),
         createdAt: Date.now(),
         createdBy: createdBy ?? null,
@@ -199,6 +215,7 @@ export function install(rt) {
       model: served ? bot.model : undefined,
       effort: served ? bot.effort : undefined,
       workDir,
+      preset: bot.preset,
       copyOf: bot.id,
     })
   }
@@ -247,6 +264,15 @@ export function install(rt) {
         bot.effort = await rt.resolveEffort(ref, patch.effort)
       }
       modelChanged = true
+    }
+    if (patch.preset !== undefined) {
+      const clean = typeof patch.preset === 'string' && patch.preset.trim() ? patch.preset.trim() : ''
+      if (clean) {
+        await botPreset(clean)
+        bot.preset = clean
+      } else {
+        delete bot.preset
+      }
     }
     if (patch.permission !== undefined) await rt.setPermission(bot, patch.permission)
     const moved = moving && workDir !== bot.workDir
@@ -318,18 +344,20 @@ export function install(rt) {
   // member when it has one.
   const defaultAdmin = (members, createdBy) => (members.includes(createdBy) ? createdBy : members.find(rt.isMain) ?? null)
 
-  async function createRoom({ members: memberIds = [], name: roomName, notice, mode, admin, createdBy } = {}) {
+  async function createRoom({ members: memberIds = [], name: roomName, notice, mode, admin, preset, createdBy } = {}) {
     const members = [...new Set(memberIds)].filter(id => rt.botOf(id))
     checkMembers(members)
     const custom = cleanRoomName(roomName ?? '')
     const adminId = admin !== undefined ? admin : defaultAdmin(members, createdBy)
     if (adminId !== null && !members.includes(adminId)) throw new Error('The admin must be a member of the group')
     if (mode !== undefined && !ROOM_MODES.includes(mode)) throw new Error(`Reply mode must be one of ${ROOM_MODES.join(', ')}`)
-    return holdName('room', custom, () => buildRoom({ members, custom, notice, mode, adminId, createdBy }))
+    return holdName('room', custom, () => buildRoom({ members, custom, notice, mode, adminId, preset, createdBy }))
   }
 
-  async function buildRoom({ members, custom, notice, mode, adminId, createdBy }) {
+  async function buildRoom({ members, custom, notice, mode, adminId, preset, createdBy }) {
     const title = custom || autoRoomName(members)
+    const cleanPreset = typeof preset === 'string' && preset.trim() ? preset.trim() : undefined
+    if (cleanPreset) await botPreset(cleanPreset)
     // The group's own Session only relays, so it stays in the team workspace; the
     // group's folder is for its members' Sessions.
     const id = await createSession(title)
@@ -344,6 +372,7 @@ export function install(rt) {
         id,
         name,
         ...(custom ? { named: true } : {}),
+        ...(cleanPreset ? { preset: cleanPreset } : {}),
         members: live,
         admin: lead,
         mode: mode ?? 'admin',
@@ -441,6 +470,18 @@ export function install(rt) {
       if (workDir === undefined) delete room.workDir
       else room.workDir = workDir
       changes.push(workDir ? `every member now works in ${workDir} here` : 'every member works in its own folder again')
+    }
+    if (patch.preset !== undefined) {
+      const clean = typeof patch.preset === 'string' && patch.preset.trim() ? patch.preset.trim() : ''
+      if (clean) {
+        await botPreset(clean)
+        room.preset = clean
+        changes.push(`preset set to "${clean}"`)
+      } else if (room.preset !== undefined) {
+        delete room.preset
+        changes.push('cleared the preset')
+      }
+      room.sessions = {}
     }
     const before = room.name
     if (name !== undefined) {

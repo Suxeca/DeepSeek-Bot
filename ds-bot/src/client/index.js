@@ -340,6 +340,14 @@ export function apply(ctx) {
     return ids
   }
   const actions = {
+    // On narrow/mobile screens, selecting any conversation automatically collapses the drawer.
+    collapseSidebar: () => {
+      if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+        if (!document.querySelector('[data-sidebar-collapsed]')) {
+          try { ctx.layout?.toggleSidebar?.() } catch { /* ignore */ }
+        }
+      }
+    },
     // The full-pane overlays sit above the conversation, so opening one must dismiss them
     // or the click appears to do nothing.
     isAgentSession: id => isAgentSessionId(id),
@@ -351,6 +359,7 @@ export function apply(ctx) {
       const target = partFor(id)
       expected = target
       ctx.uiWorkspace.openSession(target)
+      actions.collapseSidebar()
     },
     // The conversation replacements withdraw for a plain Session; set the surface
     // before the navigation so the Bot skin never flashes.
@@ -359,6 +368,7 @@ export function apply(ctx) {
       setPlain(true)
       expected = sessionId
       ctx.uiWorkspace.openSession(sessionId)
+      actions.collapseSidebar()
     },
     addAgent: async () => {
       const agent = await after(call('add-agent'))

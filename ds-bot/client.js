@@ -2358,6 +2358,8 @@ button.bt-set-row:hover{background:var(--bt-hover)}
    collapsed: on the rail, or fixed in a Windows title bar, where it also stays while
    the sidebar is open. Elsewhere an open sidebar uses the team's own top row. */
 html:not([data-windows-titlebar]) :not([class*="_collapsed"])>[class*="_logoRow"]{display:none!important}
+.bt-mobile-close{display:none!important}
+@media (max-width:1024px){.bt-mobile-close{display:inline-flex!important;margin-right:auto!important}}
 html[data-windows-titlebar] :not([class*="_collapsed"])>[class*="_logoRow"]{height:0!important;margin:0!important}
 html[data-windows-titlebar] .bt-side-collapse,html[data-platform=darwin] .bt-side-collapse{display:none}
 /* The footer ends in the Bot row: the whale's settings seat, then Connect plugins. Every
@@ -5261,6 +5263,7 @@ function TeamSidebar(props) {
     wide ? (0, import_react9.createElement)(
       "div",
       { className: "bt-side-top" },
+      (0, import_react9.createElement)("button", { type: "button", className: "bt-round bt-mobile-close", "aria-label": t("Close"), title: t("Close"), onClick: () => actions.collapseSidebar?.() }, (0, import_react9.createElement)(CloseIcon)),
       (0, import_react9.createElement)("span", { className: "bt-brand" }, (0, import_react9.createElement)(BrandMark, { size: 22 }), (0, import_react9.createElement)(BrandName)),
       (0, import_react9.createElement)(UpdateButton, { useUpdate: props.useUpdate, actions }),
       (0, import_react9.createElement)("button", { type: "button", className: "bt-round", "aria-label": t("Search"), title: t("Search"), onClick: () => actions.openPalette() }, (0, import_react9.createElement)(SearchIcon)),
@@ -13901,6 +13904,17 @@ function apply(ctx) {
     return ids;
   };
   const actions = {
+    // On narrow/mobile screens, selecting any conversation automatically collapses the drawer.
+    collapseSidebar: () => {
+      if (typeof window !== "undefined" && window.innerWidth < 1024) {
+        if (!document.querySelector("[data-sidebar-collapsed]")) {
+          try {
+            ctx.layout?.toggleSidebar?.();
+          } catch {
+          }
+        }
+      }
+    },
     // The full-pane overlays sit above the conversation, so opening one must dismiss them
     // or the click appears to do nothing.
     isAgentSession: (id) => isAgentSessionId(id),
@@ -13911,6 +13925,7 @@ function apply(ctx) {
       const target = partFor(id);
       expected = target;
       ctx.uiWorkspace.openSession(target);
+      actions.collapseSidebar();
     },
     // The conversation replacements withdraw for a plain Session; set the surface
     // before the navigation so the Bot skin never flashes.
@@ -13919,6 +13934,7 @@ function apply(ctx) {
       setPlain(true);
       expected = sessionId;
       ctx.uiWorkspace.openSession(sessionId);
+      actions.collapseSidebar();
     },
     addAgent: async () => {
       const agent = await after(call("add-agent"));
