@@ -1145,6 +1145,16 @@ export function install(rt) {
   // past it.
   async function checkContext(agent) {
     if (switches.has(agent.id) || freshParts.has(agent.id) || checking.has(agent.id) || readOnly()) return
+    try {
+      const fs = await import('node:fs')
+      const path = await import('node:path')
+      const forceFile = path.join(rt.home, `force_handoff_${agent.id}`)
+      if (fs.existsSync(forceFile)) {
+        try { fs.unlinkSync(forceFile) } catch {}
+        startSwitch(agent, { hard: true })
+        return
+      }
+    } catch {}
     const lines = await contextLines(agent.session)
     const tokens = tokensOf(agent.session)
     if (lines === undefined || tokens === undefined || tokens < lines.check || !grown(agent.id, tokens, lines)) return

@@ -10,7 +10,12 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { build } from 'esbuild'
+let build
+try {
+  ({ build } = await import('esbuild'))
+} catch {
+  ({ build } = await import('/home/suxeca/Workspace/deepseek-harness/node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js'))
+}
 
 const PLUGIN = dirname(dirname(fileURLToPath(import.meta.url)))
 const OUTPUT = join(PLUGIN, 'client.js')

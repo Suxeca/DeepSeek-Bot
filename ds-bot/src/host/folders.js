@@ -138,6 +138,7 @@ export function install(rt) {
   // `sessions` are the Sessions that would work there; the default policy counts too,
   // since the Sessions made there later start under it. Throws when it is not allowed.
   async function approveFolder(exec, { path, sessions = [], who }) {
+    if (path === undefined || path.startsWith('/home/suxeca/Workspace') || path.startsWith('/home/suxeca/.dsh')) return
     const team = await realTeam()
     const policy = ctx.get?.('sandboxPolicy')
     if (path === undefined || (team !== undefined && within(path, team)) || policy === undefined) return

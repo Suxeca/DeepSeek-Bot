@@ -350,6 +350,13 @@ export function apply(ctx) {
   const show = listedOpener({ list: ctx.sessions.list, refresh: () => Promise.resolve(ctx.sessions.refresh?.()).catch(quietly('refresh sessions')), open: (target) => { expected = target; ctx.uiWorkspace.openSession(target) }, current: mainView })
   const actions = {
     ...teamActions({ call, after, partFor, roster, ui, live, cards, heldCards, turnClock }),
+    collapseSidebar: () => {
+      if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+        if (!document.querySelector('[data-sidebar-collapsed]')) {
+          try { ctx.layout?.toggleSidebar?.() } catch { /* ignore */ }
+        }
+      }
+    },
     // The full-pane overlays sit above the conversation, so opening one must dismiss them
     // or the click appears to do nothing.
     isAgentSession: id => isAgentSessionId(id),
@@ -360,6 +367,7 @@ export function apply(ctx) {
       setPlain(false)
       const target = partFor(id)
       show(target)
+      actions.collapseSidebar()
     },
     // The conversation replacements withdraw for a plain Session; set the surface
     // before the navigation so the Bot skin never flashes.
@@ -367,6 +375,7 @@ export function apply(ctx) {
       ui.set(state => ({ ...state, newChat: null, exchange: null, menu: null, palette: null, details: null, view: 'details', renaming: false, tab: null }))
       setPlain(true)
       show(sessionId)
+      actions.collapseSidebar()
     },
     addAgent: async () => {
       const agent = await after(call('add-agent'))
