@@ -3465,7 +3465,7 @@ function ShareIcon() {
     (0, import_react3.createElement)("path", { d: "M10 12.5V3M6.5 6.5L10 3l3.5 3.5M4 11v4.5A1.5 1.5 0 0 0 5.5 17h9a1.5 1.5 0 0 0 1.5-1.5V11" })
   );
 }
-function CloseIcon2() {
+function CloseIcon() {
   return (0, import_react3.createElement)("svg", { width: 16, height: 16, viewBox: "0 0 20 20", "aria-hidden": true }, (0, import_react3.createElement)("path", { d: "M5 5l10 10M15 5L5 15", stroke: "currentColor", strokeWidth: 1.6, strokeLinecap: "round" }));
 }
 var ChevronLeftIcon = () => (0, import_react3.createElement)("svg", { width: 16, height: 16, viewBox: "0 0 20 20", fill: "none", stroke: "currentColor", strokeWidth: 1.6, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, (0, import_react3.createElement)("path", { d: "M12.5 4.5L7 10l5.5 5.5" }));
@@ -3685,7 +3685,7 @@ function QuestionView({ question, onAnswer, onDismiss, onInteract, busy = false,
         question.detail ? (0, import_react5.createElement)("div", { className: "bt-q-detail" }, question.detail) : null,
         raised && multi ? (0, import_react5.createElement)("div", { className: "bt-q-detail" }, t("Choose all that apply")) : null
       ),
-      (0, import_react5.createElement)("button", { type: "button", className: "bt-q-x", "aria-label": t("Dismiss question"), title: t("Dismiss"), onClick: onDismiss, disabled: busy }, (0, import_react5.createElement)(CloseIcon2))
+      (0, import_react5.createElement)("button", { type: "button", className: "bt-q-x", "aria-label": t("Dismiss question"), title: t("Dismiss"), onClick: onDismiss, disabled: busy }, (0, import_react5.createElement)(CloseIcon))
     ),
     rows.length > 0 ? (0, import_react5.createElement)("div", { className: "bt-q-list", role: "group" }, rows) : null,
     field && !raised ? (0, import_react5.createElement)(
@@ -4310,7 +4310,7 @@ function WidgetCard({ title, view, onSubmit, onDismiss, raised = false, settled 
       { className: "bt-q-head" },
       (0, import_react6.createElement)("div", { className: "bt-q-text" }, (0, import_react6.createElement)("p", { className: "bt-q-title", id: titleId }, title)),
       (0, import_react6.createElement)("span", { className: "bt-q-badge" }, t("View")),
-      onDismiss ? (0, import_react6.createElement)("button", { type: "button", className: "bt-q-x", "aria-label": t("Dismiss view"), title: t("Dismiss"), onClick: onDismiss }, (0, import_react6.createElement)(CloseIcon2)) : null
+      onDismiss ? (0, import_react6.createElement)("button", { type: "button", className: "bt-q-x", "aria-label": t("Dismiss view"), title: t("Dismiss"), onClick: onDismiss }, (0, import_react6.createElement)(CloseIcon)) : null
     ),
     (0, import_react6.createElement)(WidgetView, { view, onSubmit, settled, answer })
   );
@@ -4493,7 +4493,7 @@ function SecretHead({ bot, title, detail, name, onClose }) {
       (0, import_react7.createElement)("p", { className: "bt-q-title" }, title),
       (0, import_react7.createElement)("div", { className: "bt-q-detail" }, (0, import_react7.createElement)("code", { className: "bt-secret-name" }, name), detail ? ` · ${detail}` : "")
     ),
-    onClose ? (0, import_react7.createElement)("button", { type: "button", className: "bt-q-x", "aria-label": t("Cancel the request"), title: t("Cancel"), onClick: onClose }, (0, import_react7.createElement)(CloseIcon2)) : null
+    onClose ? (0, import_react7.createElement)("button", { type: "button", className: "bt-q-x", "aria-label": t("Cancel the request"), title: t("Cancel"), onClick: onClose }, (0, import_react7.createElement)(CloseIcon)) : null
   );
 }
 function SecretCard({ sessionId, bot, request, roster, actions, inline = false }) {
@@ -6982,7 +6982,7 @@ function NewMessagePills({ sessionId, useSessions, useUi, useTurnClock }) {
         event.stopPropagation();
         onDismiss();
       }
-    }, (0, import_react12.createElement)(CloseIcon2))
+    }, (0, import_react12.createElement)(CloseIcon))
   );
   const toLatest = () => {
     const scroller = document.querySelector("[data-conversation-scroll]");
@@ -7749,7 +7749,7 @@ ${shown}`, { axis: "y", ...QUICK_EDGES });
         query ? (0, import_react15.createElement)("button", { type: "button", className: "bt-palette-clear", "aria-label": t("Clear search"), onClick: () => {
           setQuery("");
           setCursor(0);
-        } }, (0, import_react15.createElement)(CloseIcon2)) : null
+        } }, (0, import_react15.createElement)(CloseIcon)) : null
       ),
       (0, import_react15.createElement)(
         "div",
@@ -9049,7 +9049,7 @@ function Reply({ answer, dismiss }) {
       "div",
       { className: "bt-mem-reply-head" },
       (0, import_react20.createElement)("span", { className: "bt-mem-reply-asked" }, answer.asked),
-      answer.pending ? null : (0, import_react20.createElement)("button", { type: "button", className: "bt-icon-btn", "aria-label": t("Dismiss"), onClick: dismiss }, (0, import_react20.createElement)(CloseIcon2))
+      answer.pending ? null : (0, import_react20.createElement)("button", { type: "button", className: "bt-icon-btn", "aria-label": t("Dismiss"), onClick: dismiss }, (0, import_react20.createElement)(CloseIcon))
     ),
     answer.pending ? (0, import_react20.createElement)("div", { className: "bt-mem-reply-text bt-shimmer" }, t("Thinking…")) : answer.error ? (0, import_react20.createElement)("div", { className: "bt-mem-reply-text bt-danger" }, hostText(answer.error)) : (0, import_react20.createElement)(
       import_react20.Fragment,
@@ -9058,7 +9058,7 @@ function Reply({ answer, dismiss }) {
       answer.changes.length > 0 ? (0, import_react20.createElement)("ul", { className: "bt-mem-changes" }, answer.changes.map((change, index) => (0, import_react20.createElement)(
         "li",
         { key: index, "data-ok": change.ok || void 0 },
-        change.ok ? (0, import_react20.createElement)(CheckIcon) : (0, import_react20.createElement)(CloseIcon2),
+        change.ok ? (0, import_react20.createElement)(CheckIcon) : (0, import_react20.createElement)(CloseIcon),
         (0, import_react20.createElement)("span", null, changeLine(change))
       ))) : null
     )
@@ -9195,7 +9195,7 @@ function MemoryDialog({ owner, actions, leaving = false }) {
         (0, import_react20.createElement)("span", { className: "bt-mem-status" }, page === "summary" ? [owner.name, status].filter(Boolean).join(" · ") : status),
         (0, import_react20.createElement)("span", { className: "bt-mem-head-gap" }),
         (0, import_react20.createElement)("button", { ref: dotsRef, type: "button", className: "bt-icon-btn", "aria-label": t("Memory options"), "aria-haspopup": "menu", "aria-expanded": menu, onClick: () => setMenu((value) => !value) }, (0, import_react20.createElement)(DotsIcon)),
-        (0, import_react20.createElement)("button", { type: "button", className: "bt-icon-btn", "aria-label": t("Close memory"), onClick: close }, (0, import_react20.createElement)(CloseIcon2)),
+        (0, import_react20.createElement)("button", { type: "button", className: "bt-icon-btn", "aria-label": t("Close memory"), onClick: close }, (0, import_react20.createElement)(CloseIcon)),
         menuShown ? (0, import_react20.createElement)(
           "div",
           { ref: menuRef, className: "bt-menu bt-mem-menu", role: "menu", "aria-label": t("Memory options"), "data-leaving": menuLeaving || void 0 },
@@ -9804,7 +9804,7 @@ function CreateBot({ roster, actions, start, brief = "", onBack, canGoBack, onCr
       { className: "bt-create-head" },
       canGoBack ? (0, import_react22.createElement)("button", { type: "button", className: "bt-icon-btn", "aria-label": t("Back to new chat"), onClick: onBack }, (0, import_react22.createElement)(ChevronLeftIcon)) : (0, import_react22.createElement)("span", { className: "bt-create-gap" }),
       (0, import_react22.createElement)("span", { className: "bt-create-title" }, t("Create Bot")),
-      (0, import_react22.createElement)("button", { type: "button", className: "bt-icon-btn", "aria-label": t("Close"), onClick: () => actions.closeOverlay() }, (0, import_react22.createElement)(CloseIcon2))
+      (0, import_react22.createElement)("button", { type: "button", className: "bt-icon-btn", "aria-label": t("Close"), onClick: () => actions.closeOverlay() }, (0, import_react22.createElement)(CloseIcon))
     ),
     (0, import_react22.createElement)("div", { className: "bt-create-body" }, card)
   );
@@ -10413,7 +10413,7 @@ function VoiceMode({ sessionId, roster, actions, useSessions, useSessionStatus }
         "aria-label": phase === "paused" ? t("Resume listening") : t("Pause"),
         onClick: togglePause
       }, (0, import_react25.createElement)(MicIcon, { size: 20 }), phase === "paused" ? (0, import_react25.createElement)("span", { className: "bt-voice-slash", "aria-hidden": true }) : null),
-      (0, import_react25.createElement)("button", { type: "button", className: "bt-voice-btn bt-voice-end", "aria-label": t("End voice chat"), onClick: close }, (0, import_react25.createElement)(CloseIcon2))
+      (0, import_react25.createElement)("button", { type: "button", className: "bt-voice-btn bt-voice-end", "aria-label": t("End voice chat"), onClick: close }, (0, import_react25.createElement)(CloseIcon))
     )
   );
 }
@@ -11979,7 +11979,7 @@ function ErrorToast({ useUi, actions }) {
       actions.dismissToast(toast.token);
       actions.openSettings("feedback");
     } }, t("Details")),
-    (0, import_react30.createElement)("button", { type: "button", className: "bt-icon-btn bt-toast-close", "aria-label": t("Dismiss"), onClick: () => actions.dismissToast(toast.token) }, (0, import_react30.createElement)(CloseIcon2))
+    (0, import_react30.createElement)("button", { type: "button", className: "bt-icon-btn bt-toast-close", "aria-label": t("Dismiss"), onClick: () => actions.dismissToast(toast.token) }, (0, import_react30.createElement)(CloseIcon))
   );
 }
 var FEEDBACK_CSS = `
@@ -12757,7 +12757,7 @@ function SettingsDialog({ page, id, roster, actions, useUpdate, leaving = false 
           (0, import_react33.createElement)(UsagePage, { roster, actions, focusId: usageFocus })
         ) : null
       ),
-      (0, import_react33.createElement)("button", { type: "button", className: "bt-settings-close", "aria-label": t("Close settings"), onClick: close }, (0, import_react33.createElement)(CloseIcon2))
+      (0, import_react33.createElement)("button", { type: "button", className: "bt-settings-close", "aria-label": t("Close settings"), onClick: close }, (0, import_react33.createElement)(CloseIcon))
     )
   );
 }
@@ -13352,7 +13352,7 @@ function DetailsDrawer({ sessionId, startRenaming, startTab, hasStrip, roster, a
         { key: "head", className: "bt-subhead", "data-move": move },
         (0, import_react36.createElement)("button", { type: "button", className: "bt-icon-btn", "aria-label": t("Back to details"), onClick: () => setView("overview") }, (0, import_react36.createElement)(ChevronLeftIcon)),
         (0, import_react36.createElement)("span", { className: "bt-subhead-title" }, bot ? t("Settings") : t("Group settings")),
-        hasStrip ? null : (0, import_react36.createElement)("button", { type: "button", className: "bt-icon-btn", "aria-label": t("Close details"), onClick: close }, (0, import_react36.createElement)(CloseIcon2))
+        hasStrip ? null : (0, import_react36.createElement)("button", { type: "button", className: "bt-icon-btn", "aria-label": t("Close details"), onClick: close }, (0, import_react36.createElement)(CloseIcon))
       ),
       (0, import_react36.createElement)(
         "div",
@@ -13368,7 +13368,7 @@ function DetailsDrawer({ sessionId, startRenaming, startTab, hasStrip, roster, a
     bot || room2 ? (0, import_react36.createElement)("button", { type: "button", className: "bt-round", "aria-label": bot ? t("Edit Bot") : t("Group settings"), title: bot ? t("Edit Bot") : t("Group settings"), "data-info-row": "settings", onClick: () => setView("settings") }, (0, import_react36.createElement)(GearIcon)) : null,
     bot && roster.browser === true && actions.openBrowser ? (0, import_react36.createElement)("button", { type: "button", className: "bt-round", "aria-label": t("Open browser"), title: t("Open this Bot's browser"), onClick: () => actions.openBrowser(sessionId) }, (0, import_react36.createElement)(GlobeIcon)) : null,
     bot || room2 ? (0, import_react36.createElement)("button", { type: "button", className: "bt-round", "aria-label": copied ? t("Copied conversation") : t("Share conversation"), title: copied ? t("Copied") : t("Copy conversation as Markdown"), onClick: share }, copied ? (0, import_react36.createElement)("span", { key: "copied", className: "bt-pop-in" }, "✓") : (0, import_react36.createElement)(ShareIcon)) : null,
-    hasStrip ? null : (0, import_react36.createElement)("button", { type: "button", className: "bt-round", "aria-label": t("Close details"), onClick: close }, (0, import_react36.createElement)(CloseIcon2))
+    hasStrip ? null : (0, import_react36.createElement)("button", { type: "button", className: "bt-round", "aria-label": t("Close details"), onClick: close }, (0, import_react36.createElement)(CloseIcon))
   );
   if (!bot && !room2) {
     return [
@@ -13482,7 +13482,7 @@ var BackIcon = icon(["M12.5 4.5L7 10l5.5 5.5"]);
 var ForwardIcon = icon(["M7.5 4.5L13 10l-5.5 5.5"]);
 var ReloadIcon = icon(["M15.5 10a5.5 5.5 0 1 1-1.6-3.9", "M15.5 3.5v3.5H12"]);
 var StopIcon = icon(["M5.5 5.5l9 9M14.5 5.5l-9 9"]);
-var CloseIcon3 = icon(["M5.5 5.5l9 9M14.5 5.5l-9 9"]);
+var CloseIcon2 = icon(["M5.5 5.5l9 9M14.5 5.5l-9 9"]);
 var PlusTabIcon = icon(["M10 5v10M5 10h10"]);
 var LockIcon2 = icon(["M6.5 9V7a3.5 3.5 0 0 1 7 0v2", "M5.5 9h9v7h-9z"]);
 function Favicon({ src, className }) {
@@ -13652,7 +13652,7 @@ function PanelStrip({ bot, subject, view, ids, active, reading, onView, actions,
     ),
     // New tab and Close stay outside the scrolling tabs, so a narrow panel keeps both.
     (0, import_react37.createElement)("button", { type: "button", className: "bt-ptab-new", "aria-label": t("New tab"), title: t("New tab"), onClick: () => actions.browserNewTab(subject) }, (0, import_react37.createElement)(PlusTabIcon)),
-    (0, import_react37.createElement)("button", { type: "button", className: "bt-icon-btn bt-ptab-close", "aria-label": t("Close panel"), title: t("Close panel"), onClick: () => actions.closePanel() }, (0, import_react37.createElement)(CloseIcon3))
+    (0, import_react37.createElement)("button", { type: "button", className: "bt-icon-btn bt-ptab-close", "aria-label": t("Close panel"), title: t("Close panel"), onClick: () => actions.closePanel() }, (0, import_react37.createElement)(CloseIcon2))
   );
 }
 function BrowserView({ bot, tabId, leaving, landed, actions, useBrowserPages }) {
